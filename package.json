@@ -1,0 +1,39 @@
+{
+  "name": "seisplotjs-seedlink",
+  "version": "0.0.1",
+  "description": "Receiving miniseed data from a seedlink/websocket server.",
+  "main": "./lib/seedlink.js",
+  "dependencies": {
+    "seisplotjs-miniseed": ">= 1.0.0"
+  },
+  "scripts": {
+    "lint": "eslint 'src/*.js'",
+    "test": "qunit -c ./lib/seedlink.js -t ./test/index.js",
+    "compile": "babel --presets es2015 -d lib/ src/",
+    "prepublish": "npm run compile"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/crotwell/seisplotjs-seedlink.git"
+  },
+  "keywords": [
+    "seismology",
+    "miniseed",
+    "seedlink"
+  ],
+  "author": "Philip Crotwell <crotwell@seis.sc.edu>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/crotwell/seisplotjs-seedlink/issues"
+  },
+  "homepage": "https://github.com/crotwell/seisplotjs-seedlink",
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-preset-es2015": "^6.14.0",
+    "eslint": "^3.7.1",
+    "eslint-config-standard": "^6.2.0",
+    "eslint-plugin-promise": "^3.0.0",
+    "eslint-plugin-standard": "^2.0.1",
+    "qunit": "^0.9.1"
+  }
+}
