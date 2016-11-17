@@ -1,5 +1,5 @@
 # seisplotjs-seedlink
-Connect to a seedlink server and received miniseed data from it.
+Connect to a seedlink server using websockets and received miniseed data from it.
 
 See 
 
