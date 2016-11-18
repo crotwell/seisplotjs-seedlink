@@ -4,6 +4,7 @@
   "description": "Receiving miniseed data from a seedlink/websocket server.",
   "main": "./lib/seedlink.js",
   "dependencies": {
+    "rsvp": "^3.3.3",
     "seisplotjs-miniseed": ">= 1.0.0"
   },
   "scripts": {
