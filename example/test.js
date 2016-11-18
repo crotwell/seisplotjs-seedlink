@@ -6,6 +6,7 @@ var wp = require('seisplotjs-waveformplot');
 
 //wp.createPlotsBySelector('div.myseisplot');
 console.log("before select");
+wp.d3.select('div.realtime').append("p").text("waiting on first data");
 wp.d3.select('div.realtime').each(function(d) {
 console.log("in select");
   let svgParent = wp.d3.select(this);
@@ -38,7 +39,10 @@ let byChannel = wp.miniseed.byChannel(dataRecords);
               let key = keys[i];
               segments[i] = wp.miniseed.merge(byChannel[key]);
             }
+// remove existing, replace with new chart
 svgParent.selectAll("svg").remove();
+//remove old 'waitin' p tag
+svgParent.selectAll("p").remove();
 
   let seismogram = new wp.chart(svgParent,  segments);
     seismogram.draw();
