@@ -15,10 +15,10 @@ RSVP.on('error', function(reason) {
 });
 
 export class SeedlinkConnection {
-  constructor(url, requestConfig, callback, errorFn) {
+  constructor(url, requestConfig, receiveMiniseedFn, errorFn) {
     this.url = url;
     this.requestConfig = requestConfig;
-    this.callback = callback;
+    this.receiveMiniseedFn = receiveMiniseedFn;
     this.errorFn = errorFn;
   }
 
@@ -38,18 +38,21 @@ export class SeedlinkConnection {
         return that.sendCmdArray(that.webSocket, [ 'DATA' ]);
       })
       .then(function(val) {
-        console.log("wait for message "+val);
-        that.webSocket.onmessage = that.handleMiniseed;
+        console.log("wait for miniseed ");
+        that.webSocket.onmessage = function(event) {
+          that.handle(event);
+        };
         that.webSocket.send('END\r');
         return val;
       }, function(err) {
         console.log("reject: "+err);
-        that.webSocket.close();
+        that.close();
       });
     };
   }
 
   close() {
+    console.log("Closing webSocket.");
     if (this.webSocket) {
       this.webSocket.close();
     }
@@ -67,34 +70,31 @@ console.log("handle miniseed: "+event.data.byteLength);
 
   handleMiniseed(event) {
     try {
-        console.log("Response: "+event.data+" len="+event.data.byteLength);
        // let arrBuf = new ArrayBuffer(event.data);
         if (event.data.byteLength < 64) {
           errorFn("message too small to be miniseed: "+event.data.byteLength +" "+arrayBufferToString(event.data));
 console.log("message too small to be miniseed: "+event.data.byteLength);
           return;
         }
-console.log("check header");
         let slHeader = new DataView(event.data, 0, 8);
         // check for 'SL' at start
         if (slHeader.getInt8(0) === 83 && slHeader.getInt8(1) === 76) {
-console.log("check header ok");
           let seqStr = '';
           for (let i=0; i<6; i++) {
             seqStr = seqStr + String.fromCharCode(slHeader.getInt8(2+i));
           }
-console.log("seq is "+seqStr);
           let dataView = new DataView(event.data, 8, event.data.byteLength-8);
           let out = {
+            rawsequence: seqStr,
             sequence: parseInt(seqStr, 16),
             miniseed: new miniseed.DataRecord(dataView)
           }
-console.log("miniseed from "+out.miniseed.header.staCode);
-          this.callback(out);
+          this.receiveMiniseedFn(out);
         } else {
           errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
         }
      } catch(e) {
+console.log("catch "+e);
         this.close();
      }
   }

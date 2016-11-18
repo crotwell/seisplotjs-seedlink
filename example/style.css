@@ -1,0 +1,9 @@
+div.realtime {
+  height: 200px;
+}
+
+path.seispath {
+  stroke: skyblue;
+  fill: none;
+  stroke-width: 1px;
+}

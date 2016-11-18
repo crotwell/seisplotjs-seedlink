@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8" />
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Testing seisplotjs-seedlink with seisplotjs-waveform.</h1>
+ <p>See <a href="https://github.com/crotwell/seisplotjs-seedlink">the Github</a> page for more information.</p>
+
+<!--
+-->
+<h3>realtime plot of TA.KMSC.00.BHZ</h3>
+
+<p>Three ways of specifying the time window, start and duration</p>
+<pre>
+&ltdiv class='realtime' net='TA' sta='KMSC' loc='00' chan='BHZ'&gt
+&lt/div&gt
+</pre>
+
+<div class='realtime' net='TA' sta='KMSC' loc='00' chan='BHZ'>
+</div>
+
+<script src="bundle.js"></script>
+</body>
+</html>
