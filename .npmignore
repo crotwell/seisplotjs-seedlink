@@ -1,2 +1,3 @@
 src/
 .eslintrc.js
+example/bundle.js
