@@ -15,6 +15,18 @@ RSVP.on('error', function(reason) {
 });
 
 export class SeedlinkConnection {
+
+  /** creates a seedlink connection to the given url.
+    * requestConfig is an array of seedlink commands
+    * like: 
+    *   [ 'STATION JSC CO',
+    *     'SELECT 00BHZ.D' ]
+    * and receiveMiniseedFn is the callback function that
+    * will be invoked for each seedlink packet received
+    * which contains 'sequence', a sequence number
+    * and 'miniseed', a single miniseed record.
+    * The connection is not made until the connect() method is called.
+    */
   constructor(url, requestConfig, receiveMiniseedFn, errorFn) {
     this.url = url;
     this.requestConfig = requestConfig;
