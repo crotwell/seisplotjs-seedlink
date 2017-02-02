@@ -6,7 +6,7 @@ var wp = require('seisplotjs-waveformplot');
 let clockOffset = 0; // should get from server somehow
 let duration = 300;
 let timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
-console.log("timeWindow: "+timeWindow.startDate+" "+timeWindow.endDate);
+console.log("timeWindow: "+timeWindow.start+" "+timeWindow.end);
 let host = "service.iris.edu";
 let config = [
   'STATION JSC CO',
@@ -30,7 +30,7 @@ let callbackFn = function(slPacket) {
     allSeisPlots[ codes ].append(seismogram);
   } else {
     let plotDiv = svgParent.append('div').attr('class', codes);
-    let seisPlot = new wp.chart(plotDiv, [seismogram], timeWindow.startDate, timeWindow.endDate);
+    let seisPlot = new wp.chart(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
     seisPlot.draw();
     allSeisPlots[slPacket.miniseed.codes()] = seisPlot;
   }
@@ -46,10 +46,10 @@ slConn.close();
 }
 }
   timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
-  //console.log("reset time window for "+timeWindow.startDate+" "+timeWindow.endDate );
+  //console.log("reset time window for "+timeWindow.start+" "+timeWindow.end );
   for (var key in allSeisPlots) {
    if (allSeisPlots.hasOwnProperty(key)) {
-     allSeisPlots[key].setPlotStartEnd(timeWindow.startDate, timeWindow.endDate);
+     allSeisPlots[key].setPlotStartEnd(timeWindow.start, timeWindow.end);
    }
   }
 }, 1000);
