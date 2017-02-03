@@ -11,17 +11,21 @@
 
 <!--
 -->
-<h3>realtime plot of TA.KMSC.00.BHZ</h3>
+<h3>realtime plot of TA.KMSC.--.BHZ and CO.JSC.00.HH? and few CO.JSC.00.HN? channels</h3>
 
-<p>javascript keys off of the class and then pulls the NSLC from the attributes.</p>
+<p>javascript configures a single seedlink and then creates a new seismogram plot
+for each channel as it is received. The plots are inserted into div.realtime</p>
 <pre>
-&ltdiv class='realtime' net='TA' sta='KMSC' loc='--' chan='BHZ' duration=300 &gt
+&ltdiv class='realtime' &gt
 &lt/div&gt
 </pre>
 
 <div class='realtime' >
 </div>
 
-<script src="multipleChans_bundle.js"></script>
+
+<script src="seisplotjs_waveformplot_12s_standalone.js"></script>
+<script src="seisplotjs_seedlink_001s_standalone.js"></script>
+<script src="multipleChans.js"></script>
 </body>
 </html>
