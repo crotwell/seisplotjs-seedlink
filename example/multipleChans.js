@@ -1,24 +1,32 @@
 
-var seedlink = require('seisplotjs-seedlink');
+//var seedlink = require('seisplotjs-seedlink');
+// this global comes from the seisplotjs_seedlink standalone js
+var seedlink = seisplotjs_seedlink
 
-var wp = require('seisplotjs-waveformplot');
+//var wp = require('seisplotjs-waveformplot');
+// this global comes from the seisplotjs_seedlink standalone js
+var wp = seisplotjs_waveformplot;
 
 let clockOffset = 0; // should get from server somehow
 let duration = 300;
+let maxSteps = -1; // max num of ticks of the timer before stopping, for debugin
 let timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
 console.log("timeWindow: "+timeWindow.start+" "+timeWindow.end);
 let host = "service.iris.edu";
 let config = [
+  'STATION KMSC TA',
+  'SELECT --HHZ.D',
   'STATION JSC CO',
-  'SELECT 00HHZ.D',
-  'SELECT 00HHN.D',
-  'SELECT 00HHE.D' ];
+  'SELECT 00HH?.D',
+  'SELECT 00HNZ.D',
+  'SELECT 00HNN.D',
+  'SELECT 00HNE.D' ];
 
 
 //wp.createPlotsBySelector('div.myseisplot');
 console.log("before select");
 let svgParent = wp.d3.select('div.realtime');
-svgParent.append("p").text("waiting on first data");
+svgParent.append("p").attr('class', 'waitingondata').text("waiting on first data");
 
 let allSeisPlots = {};
 
@@ -27,10 +35,17 @@ let callbackFn = function(slPacket) {
   console.log("seedlink: seq="+slPacket.sequence+" "+codes);
   let seismogram = wp.miniseed.createSeismogram([slPacket.miniseed]);
   if (allSeisPlots[ codes ]) {
+    allSeisPlots[ codes ].trim(timeWindow);
     allSeisPlots[ codes ].append(seismogram);
   } else {
-    let plotDiv = svgParent.append('div').attr('class', codes);
+    svgParent.select("p.waitingondata").remove();
+    let seisDiv = svgParent.append('div').attr('class', codes);
+//    seisDiv.append('p').text(codes);
+    let plotDiv = seisDiv.append('div').attr('class', 'realtimePlot');
     let seisPlot = new wp.chart(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
+    seisPlot.disableWheelZoom();
+    seisPlot.setXSublabel(codes);
+    seisPlot.setMargin({top: 20, right: 20, bottom: 50, left: 60} );
     seisPlot.draw();
     allSeisPlots[slPacket.miniseed.codes()] = seisPlot;
   }
@@ -38,26 +53,28 @@ let callbackFn = function(slPacket) {
 
 let numSteps = 0;
 let timer = wp.d3.interval(function(elapsed) {
-if ( Object.keys(allSeisPlots).length > 1) { 
-  numSteps++;
-if (numSteps > 30 ) { 
-timer.stop();
-slConn.close();
-}
-}
+  if ( Object.keys(allSeisPlots).length > 1) { 
+    numSteps++;
+    if (maxSteps > 0 && numSteps > maxSteps ) { 
+      console.log("quit after max steps: "+maxSteps);
+      timer.stop();
+      slConn.close();
+    }
+  }
   timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
   //console.log("reset time window for "+timeWindow.start+" "+timeWindow.end );
   for (var key in allSeisPlots) {
-   if (allSeisPlots.hasOwnProperty(key)) {
-     allSeisPlots[key].setPlotStartEnd(timeWindow.start, timeWindow.end);
-   }
+    if (allSeisPlots.hasOwnProperty(key)) {
+      allSeisPlots[key].setPlotStartEnd(timeWindow.start, timeWindow.end);
+    }
   }
-}, 1000);
+}, 500);
 
 let errorFn = function(error) {
   console.log("error: "+error);
 };
 
-let slConn = new seedlink.SeedlinkConnection('ws://rtserve.iris.washington.edu:17000/seedlink', config, callbackFn, errorFn);
+let slConn = new seedlink.SeedlinkConnection('ws://rtserve.iris.washington.edu:80/seedlink', config, callbackFn, errorFn);
+slConn.setTimeCommand(new Date(new Date().getTime()-duration*1000));
 slConn.connect();
 
