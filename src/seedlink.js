@@ -6,6 +6,7 @@
 
 import * as miniseed from 'seisplotjs-miniseed';
 import * as RSVP from 'rsvp';
+import moment from 'moment';
 
 /* reexport */
 export { miniseed };
@@ -32,6 +33,11 @@ export class SeedlinkConnection {
     this.requestConfig = requestConfig;
     this.receiveMiniseedFn = receiveMiniseedFn;
     this.errorFn = errorFn;
+    this.command = 'DATA';
+  }
+
+  setTimeCommand(startDate) {
+    this.command = "TIME "+moment(startDate).format("YYYY,MM,DD,HH,mm,ss");
   }
 
   connect() {
@@ -46,8 +52,8 @@ export class SeedlinkConnection {
         return that.sendCmdArray(that.webSocket, that.requestConfig);
       })
       .then(function(val) {
-        console.log("before send DATA");
-        return that.sendCmdArray(that.webSocket, [ 'DATA' ]);
+        console.log("before send "+that.command);
+        return that.sendCmdArray(that.webSocket, [ that.command ]);
       })
       .then(function(val) {
         console.log("wait for miniseed ");
