@@ -17,10 +17,9 @@ let config = [
   'STATION KMSC TA',
   'SELECT --HHZ.D',
   'STATION JSC CO',
-  'SELECT 00HH?.D',
-  'SELECT 00HNZ.D',
-  'SELECT 00HNN.D',
-  'SELECT 00HNE.D' ];
+  'SELECT 00HHZ.D',
+  'STATION Y57A N4',
+  'SELECT --BHZ.D' ];
 
 
 //wp.createPlotsBySelector('div.myseisplot');
@@ -72,6 +71,7 @@ let timer = wp.d3.interval(function(elapsed) {
 
 let errorFn = function(error) {
   console.log("error: "+error);
+  svgParent.select("p").text("Error: "+error);
 };
 
 let slConn = new seedlink.SeedlinkConnection('ws://rtserve.iris.washington.edu:80/seedlink', config, callbackFn, errorFn);
