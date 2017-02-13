@@ -12,7 +12,24 @@ let duration = 300;
 let maxSteps = -1; // max num of ticks of the timer before stopping, for debugin
 let timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
 console.log("timeWindow: "+timeWindow.start+" "+timeWindow.end);
-let host = "service.iris.edu";
+let protocol = 'http:';
+if ("https:" == document.location.protocol) {
+  protocol = 'https:'
+}
+let wsProtocol = 'ws:';
+if (protocol == 'https:') {
+  wsProtocol = 'wss:';
+}
+//
+// Note: currently rtserve.iris does not support wss, and so this will
+// not work from https pages as you cannot use non-encrypted (ws) 
+// loaded from a https web page
+//
+let host = "rtserve.iris.washington.edu";
+let port = 80;
+let seedlinkUrl = wsProtocol+"//"+host+(port==80?'':'80')+'/seedlink';
+console.log("URL: "+seedlinkUrl);
+
 let config = [
   'STATION KMSC TA',
   'SELECT --HHZ.D',
@@ -74,7 +91,7 @@ let errorFn = function(error) {
   svgParent.select("p").text("Error: "+error);
 };
 
-let slConn = new seedlink.SeedlinkConnection('ws://rtserve.iris.washington.edu:80/seedlink', config, callbackFn, errorFn);
+let slConn = new seedlink.SeedlinkConnection(seedlinkUrl, config, callbackFn, errorFn);
 slConn.setTimeCommand(new Date(new Date().getTime()-duration*1000));
 slConn.connect();
 
