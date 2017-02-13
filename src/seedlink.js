@@ -172,7 +172,9 @@ console.log("sendCmd "+mycmd+" resp is NOT ok "+replyMsg);
 
 export function arrayBufferToString(arrBuf) {
   let dataView = new DataView(arrBuf);
-  let decoder = new TextDecoder('utf-8');
-  let decodedString = decoder.decode(dataView);
-  return decodedString;
+  let out = "";
+  for (let i=0; i< dataView.byteLength; i++) {
+    out += String.fromCharCode(dataView.getUint8(i));
+  }
+  return out;
 };
