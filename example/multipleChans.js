@@ -25,7 +25,8 @@ if (protocol == 'https:') {
 // not work from https pages as you cannot use non-encrypted (ws) 
 // loaded from a https web page
 //
-let host = "rtserve.iris.washington.edu";
+let IRIS_HOST = "rtserve.iris.washington.edu";
+let host = IRIS_HOST;
 let port = 80;
 let seedlinkUrl = wsProtocol+"//"+host+(port==80?'':'80')+'/seedlink';
 console.log("URL: "+seedlinkUrl);
@@ -42,7 +43,11 @@ let config = [
 //wp.createPlotsBySelector('div.myseisplot');
 console.log("before select");
 let svgParent = wp.d3.select('div.realtime');
-svgParent.append("p").attr('class', 'waitingondata').text("waiting on first data");
+if (wsProtocol == 'wss:' && host == IRIS_HOST) {
+  svgParent.append("h3").attr('class', 'waitingondata').text("IRIS currently does not support connections from https pages, try from a http page instead.");
+} else {
+  svgParent.append("p").attr('class', 'waitingondata').text("waiting on first data");
+} 
 
 let allSeisPlots = {};
 
