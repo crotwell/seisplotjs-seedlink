@@ -11,6 +11,8 @@ import moment from 'moment';
 /* reexport */
 export { miniseed };
 
+export const SEEDLINK_PROTOCOL = "seedlink/3.1";
+
 RSVP.on('error', function(reason) {
   console.assert(false, reason);
 });
@@ -41,7 +43,7 @@ export class SeedlinkConnection {
   }
 
   connect() {
-//    this.webSocket = new WebSocket(this.url, "seedlink");
+//    this.webSocket = new WebSocket(this.url, SEEDLINK_PROTOCOL);
     this.webSocket = new WebSocket(this.url);
 //    this.webSocket.onmessage(this.handle);
     this.webSocket.binaryType = 'arraybuffer';
@@ -91,7 +93,7 @@ console.log("handle miniseed: "+event.data.byteLength);
     try {
        // let arrBuf = new ArrayBuffer(event.data);
         if (event.data.byteLength < 64) {
-          errorFn("message too small to be miniseed: "+event.data.byteLength +" "+arrayBufferToString(event.data));
+          this.errorFn("message too small to be miniseed: "+event.data.byteLength +" "+arrayBufferToString(event.data));
 console.log("message too small to be miniseed: "+event.data.byteLength);
           return;
         }
@@ -107,10 +109,10 @@ console.log("message too small to be miniseed: "+event.data.byteLength);
             rawsequence: seqStr,
             sequence: parseInt(seqStr, 16),
             miniseed: new miniseed.DataRecord(dataView)
-          }
+          };
           this.receiveMiniseedFn(out);
         } else {
-          errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
+          this.errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
         }
      } catch(e) {
 console.log("catch "+e);
@@ -163,13 +165,13 @@ console.log("sendCmd "+mycmd+" resp is OK");
 console.log("sendCmd "+mycmd+" resp is NOT ok "+replyMsg);
           reject("msg not OK: "+replyMsg);
         }
-      }
+      };
       console.log("seedlink send cmd: "+mycmd);
       webSocket.send(mycmd+'\r\n');
     });
     return promise;
   }
-};
+}
 
 export function arrayBufferToString(arrBuf) {
   let dataView = new DataView(arrBuf);
@@ -178,4 +180,4 @@ export function arrayBufferToString(arrBuf) {
     out += String.fromCharCode(dataView.getUint8(i));
   }
   return out;
-};
+}
