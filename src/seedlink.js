@@ -9,7 +9,7 @@ import * as RSVP from 'rsvp';
 import moment from 'moment';
 
 /* reexport */
-export { miniseed };
+export { miniseed, RSVP };
 
 export const SEEDLINK_PROTOCOL = "SeedLink/3.1";
 
