@@ -10,19 +10,11 @@
 
  <p>See <a href="https://github.com/crotwell/seisplotjs-seedlink">the Github</a> page for source code.</p>
 
-<p>javascript configures a single seedlink and then prints a line to the console
-for each packet as it is received. Open javascript console to see line printed as each seedlink packet arrives.</p>
+<p>javascript configures a single seedlink and then prints lines to the textarea 
+below for each packet as it is received.</p>
 
-<p>In Chrome, View -> Developer -> javascript console</p>
-<p>In Firefox, Tools -> Web Developer -> Web Console</p>
-<p>In Safari, Develop -> Show Error Console</p>
-
-<p>If the developer tools are not visible: </p>
-<ul>
-<li>In Chrome: ...</li>
-<li>In Firefox: ...</li>
-<li>In Safari: Preferences -> Advanced and then at the bottom check Show Develop menu in menu bar</ul>
-</ul>
+<textarea id="log" readonly="true" rows=500 cols=120 >
+</textarea>
 
 <script src="seisplotjs_seedlink_001s_standalone.js"></script>
 <script src="consoleLogSeedlink.js"></script>

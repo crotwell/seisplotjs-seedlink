@@ -1,4 +1,13 @@
 
+// this sets up console.log to append to the textarea with id="console"
+var textarea = document.getElementById("log");
+textarea.value = '';// empty it
+var origLog = console.log;
+console.log = function(msg) {
+  origLog(msg);
+  textarea.value += msg+'\n';
+};
+
 //var seedlink = require('seisplotjs-seedlink');
 // this global comes from the seisplotjs_seedlink standalone js
 var seedlink = seisplotjs_seedlink
