@@ -11,7 +11,7 @@ import moment from 'moment';
 /* reexport */
 export { miniseed };
 
-export const SEEDLINK_PROTOCOL = "seedlink/3.1";
+export const SEEDLINK_PROTOCOL = "SeedLink/3.1";
 
 RSVP.on('error', function(reason) {
   console.assert(false, reason);
