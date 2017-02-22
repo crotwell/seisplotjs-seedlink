@@ -50,6 +50,7 @@ if (wsProtocol == 'wss:' && host == IRIS_HOST) {
 } 
 
 var allSeisPlots = {};
+var margin = {top: 20, right: 20, bottom: 50, left: 60};
 
 var callbackFn = function(slPacket) {
   var codes = slPacket.miniseed.codes();
@@ -66,14 +67,18 @@ var callbackFn = function(slPacket) {
     var seisPlot = new wp.chart(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
     seisPlot.disableWheelZoom();
     seisPlot.setXSublabel(codes);
-    seisPlot.setMargin({top: 20, right: 20, bottom: 50, left: 60} );
+    seisPlot.setMargin(margin );
     seisPlot.draw();
     allSeisPlots[slPacket.miniseed.codes()] = seisPlot;
   }
 }
 
 var paused = false;
+var stopped = false;
 var numSteps = 0;
+var timerInterval = (timeWindow.end.getTime()-timeWindow.start.getTime())/
+                    (parseInt(svgParent.style("width"))-margin.left-margin.right);
+console.log("start time with interval "+timerInterval);
 var timer = wp.d3.interval(function(elapsed) {
   if ( paused) { 
     return;
@@ -93,7 +98,7 @@ var timer = wp.d3.interval(function(elapsed) {
       allSeisPlots[key].setPlotStartEnd(timeWindow.start, timeWindow.end);
     }
   }
-}, 500);
+}, timerInterval);
 
 wp.d3.select("button#pause").on("click", function(d) {
   console.log("Pause..."+paused);
@@ -102,6 +107,18 @@ wp.d3.select("button#pause").on("click", function(d) {
     wp.d3.select(this).text("Play");
   } else {
     wp.d3.select(this).text("Pause");
+  }
+});
+
+wp.d3.select("button#disconnect").on("click", function(d) {
+  console.log("disconnect..."+stopped);
+  stopped = ! stopped;
+  if (stopped) {
+    slConn.close();
+    wp.d3.select(this).text("Resume");
+  } else {
+    slConn.connect();
+    wp.d3.select(this).text("Disconnect");
   }
 });
 
