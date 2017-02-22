@@ -72,8 +72,12 @@ var callbackFn = function(slPacket) {
   }
 }
 
+var paused = false;
 var numSteps = 0;
 var timer = wp.d3.interval(function(elapsed) {
+  if ( paused) { 
+    return;
+  }
   if ( Object.keys(allSeisPlots).length > 1) { 
     numSteps++;
     if (maxSteps > 0 && numSteps > maxSteps ) { 
@@ -90,6 +94,16 @@ var timer = wp.d3.interval(function(elapsed) {
     }
   }
 }, 500);
+
+wp.d3.select("button#pause").on("click", function(d) {
+  console.log("Pause..."+paused);
+  paused = ! paused;
+  if (paused) {
+    wp.d3.select(this).text("Play");
+  } else {
+    wp.d3.select(this).text("Pause");
+  }
+});
 
 var errorFn = function(error) {
   console.log("error: "+error);
