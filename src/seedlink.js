@@ -43,9 +43,7 @@ export class SeedlinkConnection {
   }
 
   connect() {
-//    this.webSocket = new WebSocket(this.url, SEEDLINK_PROTOCOL);
-    this.webSocket = new WebSocket(this.url);
-//    this.webSocket.onmessage(this.handle);
+    this.webSocket = new WebSocket(this.url, SEEDLINK_PROTOCOL);
     this.webSocket.binaryType = 'arraybuffer';
     const that = this;
     this.webSocket.onopen = function(event) {
