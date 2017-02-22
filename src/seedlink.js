@@ -82,7 +82,6 @@ export class SeedlinkConnection {
       //assume text
       console.log("handle text: "+event.data.byteLength+" "+arrayBufferToString(event.data));
     } else {
-console.log("handle miniseed: "+event.data.byteLength);
       this.handleMiniseed(event);
     }
   }
