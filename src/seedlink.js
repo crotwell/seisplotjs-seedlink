@@ -112,7 +112,8 @@ console.log("message too small to be miniseed: "+event.data.byteLength);
           this.errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
         }
      } catch(e) {
-console.log("catch "+e);
+console.assert(false, e);
+        errorFn("Error, closing seedlink. "+e);
         this.close();
      }
   }
