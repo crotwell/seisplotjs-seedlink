@@ -115,7 +115,7 @@ wp.d3.select("button#disconnect").on("click", function(d) {
   stopped = ! stopped;
   if (stopped) {
     slConn.close();
-    wp.d3.select(this).text("Resume");
+    wp.d3.select(this).text("Reconnect");
   } else {
     slConn.connect();
     wp.d3.select(this).text("Disconnect");
