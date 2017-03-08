@@ -1,5 +1,3 @@
 src/
-.eslintrc.js
-example/bundle.js
-seisplotjs_seedlink_*_standalone.js
-example/seisplotjs_waveformplot_*_standalone.js
+seisplotjs_*_standalone.js
+example/**/seisplotjs_*_standalone.js
