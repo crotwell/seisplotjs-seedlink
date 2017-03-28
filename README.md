@@ -1,5 +1,5 @@
 # seisplotjs-seedlink
-Connect to a seedlink server using websockets and received miniseed data from it.
+Connect to a [ringserver](https://seiscode.iris.washington.edu/projects/ringserver) seedlink server using websockets and received miniseed data from it. The server must be capable of accepting http connections and upgrading them to websockets for this to work.
 
 See 
 
@@ -16,7 +16,7 @@ You need [npm](http://npmjs.com) installed first. Then run ```npm install``` to 
 ```npm run compile``` will run the babel transpiler and output to the lib dir. This is what will be used if
 you depend on this package from another npm package.
 
-```npm run standalone``` will both run babel to transpile and browserify to load dependencies and generate a selfcontained js file. This is probably easiest to use if you just want to play in a single web page.
+```npm run standalone``` will both run babel to transpile and browserify to load dependencies and generate a self contained js file. This is probably easiest to use if you just want to play in a single web page.
 
 ### Examples
 
