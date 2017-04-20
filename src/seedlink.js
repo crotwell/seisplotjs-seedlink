@@ -113,7 +113,7 @@ console.log("message too small to be miniseed: "+event.data.byteLength);
         }
      } catch(e) {
 console.assert(false, e);
-        errorFn("Error, closing seedlink. "+e);
+        this.errorFn("Error, closing seedlink. "+e);
         this.close();
      }
   }
