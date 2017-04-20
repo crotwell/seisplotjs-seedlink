@@ -128,6 +128,6 @@ var errorFn = function(error) {
 };
 
 var slConn = new seedlink.SeedlinkConnection(seedlinkUrl, config, callbackFn, errorFn);
-slConn.setTimeCommand(new Date(new Date().getTime()-duration*1000));
+slConn.setTimeCommand(timeWindow.start);
 slConn.connect();
 
