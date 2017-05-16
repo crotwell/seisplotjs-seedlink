@@ -47,31 +47,27 @@ export class SeedlinkConnection {
     this.webSocket.binaryType = 'arraybuffer';
     const that = this;
     this.webSocket.onopen = function(event) {
-      console.log("In onopen");
       that.sendHello(that.webSocket)
-      .then(function(val) {
+      .then(function() {
         return that.sendCmdArray(that.webSocket, that.requestConfig);
       })
-      .then(function(val) {
-        console.log("before send "+that.command);
+      .then(function() {
         return that.sendCmdArray(that.webSocket, [ that.command ]);
       })
       .then(function(val) {
-        console.log("wait for miniseed ");
         that.webSocket.onmessage = function(event) {
           that.handle(event);
         };
         that.webSocket.send('END\r');
         return val;
       }, function(err) {
-        console.log("reject: "+err);
+        console.assert(false, "reject: "+err);
         that.close();
       });
     };
   }
 
   close() {
-    console.log("Closing webSocket.");
     if (this.webSocket) {
       this.webSocket.close();
     }
@@ -80,7 +76,6 @@ export class SeedlinkConnection {
   handle(event) {
     if (event.data.byteLength < 64) {
       //assume text
-      console.log("handle text: "+event.data.byteLength+" "+arrayBufferToString(event.data));
     } else {
       this.handleMiniseed(event);
     }
@@ -91,7 +86,6 @@ export class SeedlinkConnection {
        // let arrBuf = new ArrayBuffer(event.data);
         if (event.data.byteLength < 64) {
           this.errorFn("message too small to be miniseed: "+event.data.byteLength +" "+arrayBufferToString(event.data));
-console.log("message too small to be miniseed: "+event.data.byteLength);
           return;
         }
         let slHeader = new DataView(event.data, 0, 8);
@@ -119,13 +113,9 @@ console.assert(false, e);
   }
 
   sendHello(webSocket) {
-console.log("in sendHello");
   let promise = new RSVP.Promise(function(resolve, reject) {
-console.log('in sendHello promise');
     webSocket.onmessage = function(event) {
-      console.log("msg: "+event);
       let replyMsg = arrayBufferToString(event.data);
-      console.log("HELLO resp: "+replyMsg);
       let lines = replyMsg.trim().split('\r');
       if (lines.length == 2) {
         resolve(lines);
@@ -133,14 +123,12 @@ console.log('in sendHello promise');
         reject("not 2 lines: "+replyMsg);
       }
     };
-console.log("send HELLO");
     webSocket.send("HELLO\r");
   });
   return promise;
 }
 
   sendCmdArray(webSocket, cmd) {
-    console.log('in sendCmdArray');
     let that = this;
     return cmd.reduce(function(cur, next) {
       return cur.then(function() {
@@ -150,21 +138,15 @@ console.log("send HELLO");
   }
 
   createCmdPromise(webSocket, mycmd) {
-console.log("create cmd promise for "+mycmd+" "+webSocket);
     let promise = new RSVP.Promise(function(resolve, reject) {
-      console.log("my cmd: "+mycmd);
       webSocket.onmessage = function(event) {
         let replyMsg = arrayBufferToString(event.data).trim();
-        console.log("resp: "+replyMsg);
         if (replyMsg === 'OK') {
-console.log("sendCmd "+mycmd+" resp is OK");
           resolve(replyMsg);
         } else {
-console.log("sendCmd "+mycmd+" resp is NOT ok "+replyMsg);
           reject("msg not OK: "+replyMsg);
         }
       };
-      console.log("seedlink send cmd: "+mycmd);
       webSocket.send(mycmd+'\r\n');
     });
     return promise;
