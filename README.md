@@ -9,6 +9,12 @@ http://www.seiscomp3.org/wiki/doc/applications/seedlink
 
 ### Building
 
+```
+npm i seisplotjs-seedlink
+```
+
+or
+
 You need [npm](http://npmjs.com) installed first. Then run ```npm install``` to pull in dependencies and install the package locally.
 
 ```npm run lint``` will display lint errors
