@@ -19,9 +19,9 @@ RSVP.on('error', function(reason) {
 
 export class SeedlinkConnection {
 
-  /** creates a seedlink connection to the given url.
+  /** creates a seedlink websocket connection to the given url.
     * requestConfig is an array of seedlink commands
-    * like: 
+    * like:
     *   [ 'STATION JSC CO',
     *     'SELECT 00BHZ.D' ]
     * and receiveMiniseedFn is the callback function that
