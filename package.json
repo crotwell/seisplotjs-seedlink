@@ -2,17 +2,17 @@
   "name": "seisplotjs-seedlink",
   "version": "1.0.1-alpha.1",
   "description": "Receiving miniseed data from a seedlink/websocket server.",
-  "main": "./lib/seedlink.js",
+  "main": "./lib/index.js",
   "dependencies": {
-    "moment": "^2.18.1",
+    "moment": "^2.19.1",
     "rsvp": "^4.0.1",
     "seisplotjs-miniseed": "^1.2.0-alpha.1"
   },
   "scripts": {
     "lint": "eslint 'src/*.js'",
-    "test": "qunit -c ./lib/seedlink.js -t ./test/index.js",
+    "test": "qunit -c ./lib/index.js -t ./test/index.js",
     "compile": "babel --presets es2015 -d lib/ src/",
-    "standalone": "browserify src/seedlink.js --standalone seisplotjs_seedlink -o seisplotjs_seedlink_${npm_package_version}_standalone.js -t [ babelify --presets [ es2015 ] ]",
+    "standalone": "browserify src/index.js --standalone seisplotjs_seedlink -o seisplotjs_seedlink_${npm_package_version}_standalone.js -t [ babelify --presets [ es2015 ] ]",
     "prepare": "npm run compile"
   },
   "repository": {
