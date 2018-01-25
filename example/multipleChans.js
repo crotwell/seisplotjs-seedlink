@@ -22,7 +22,7 @@ if (protocol == 'https:') {
 }
 //
 // Note: currently rtserve.iris does not support wss, and so this will
-// not work from https pages as you cannot use non-encrypted (ws) 
+// not work from https pages as you cannot use non-encrypted (ws)
 // loaded from a https web page
 //
 var IRIS_HOST = "rtserve.iris.washington.edu";
@@ -47,7 +47,7 @@ if (wsProtocol == 'wss:' && host == IRIS_HOST) {
   svgParent.append("h3").attr('class', 'waitingondata').text("IRIS currently does not support connections from https pages, try from a http page instead.");
 } else {
   svgParent.append("p").attr('class', 'waitingondata').text("waiting on first data");
-} 
+}
 
 var allSeisPlots = {};
 var margin = {top: 20, right: 20, bottom: 50, left: 60};
@@ -64,7 +64,7 @@ var callbackFn = function(slPacket) {
     var seisDiv = svgParent.append('div').attr('class', codes);
 //    seisDiv.append('p').text(codes);
     var plotDiv = seisDiv.append('div').attr('class', 'realtimePlot');
-    var seisPlot = new wp.chart(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
+    var seisPlot = new wp.Seismograph(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
     seisPlot.disableWheelZoom();
     seisPlot.setXSublabel(codes);
     seisPlot.setMargin(margin );
@@ -76,23 +76,21 @@ var callbackFn = function(slPacket) {
 var paused = false;
 var stopped = false;
 var numSteps = 0;
-var timerInterval = (timeWindow.end.getTime()-timeWindow.start.getTime())/
+var timerInterval = (timeWindow.end.valueOf()-timeWindow.start.valueOf())/
                     (parseInt(svgParent.style("width"))-margin.left-margin.right);
-console.log("start time with interval "+timerInterval);
 var timer = wp.d3.interval(function(elapsed) {
-  if ( paused) { 
+  if ( paused) {
     return;
   }
-  if ( Object.keys(allSeisPlots).length > 1) { 
+  if ( Object.keys(allSeisPlots).length > 1) {
     numSteps++;
-    if (maxSteps > 0 && numSteps > maxSteps ) { 
+    if (maxSteps > 0 && numSteps > maxSteps ) {
       console.log("quit after max steps: "+maxSteps);
       timer.stop();
       slConn.close();
     }
   }
   timeWindow = wp.calcStartEndDates(null, null, duration, clockOffset);
-  //console.log("reset time window for "+timeWindow.start+" "+timeWindow.end );
   for (var key in allSeisPlots) {
     if (allSeisPlots.hasOwnProperty(key)) {
       allSeisPlots[key].setPlotStartEnd(timeWindow.start, timeWindow.end);
@@ -130,4 +128,3 @@ var errorFn = function(error) {
 var slConn = new seedlink.SeedlinkConnection(seedlinkUrl, config, callbackFn, errorFn);
 slConn.setTimeCommand(timeWindow.start);
 slConn.connect();
-
