@@ -53,7 +53,6 @@ export class RingserverConnection {
     let mythis = this;
     let promise = new RSVP.Promise(function(resolve, reject) {
       let url = mythis.formIdURL();
-      console.log("ringserver formIdURL: "+url);
       let client = new XMLHttpRequest();
       client.open("GET", url);
       client.onreadystatechange = handler;
@@ -63,11 +62,10 @@ export class RingserverConnection {
 
       function handler() {
         if (this.readyState === this.DONE) {
-          console.log("Handle /id: "+mythis.host()+" "+this.status);
           if (this.status === 200) {
             resolve(this.response);
           } else {
-            console.log("Reject version: host="+mythis.host()+" status="+this.status+" statusText:"+this.statusText);
+            console.log("Reject pullIdRaw: host="+mythis.host()+" status="+this.status+" statusText:"+this.statusText);
             reject(this);
           }
         }
@@ -141,11 +139,10 @@ export class RingserverConnection {
 
       function handler() {
         if (this.readyState === this.DONE) {
-          console.log("Handle /id: "+mythis.host()+" "+this.status);
           if (this.status === 200) {
             resolve(this.response);
           } else {
-            console.log("Reject version: "+mythis.host()+" "+this.status);
+            console.log("Reject pullStreamsRaw: "+mythis.host()+" "+this.status);
             reject(this);
           }
         }
@@ -170,11 +167,9 @@ export class RingserverConnection {
 
 export function stationsFromStreams(streams) {
   let out = new Map();
-  console.log("stationsFromStreams: "+streams.length);
   for (const s of streams) {
     const nslc = nslcSplit(s.key);
     const staKey = nslc.networkCode+"."+nslc.stationCode;
-    console.log("sta: "+staKey);
     if (!out.has(staKey)) {
       out.set(staKey, new StreamStat(staKey, s.startRaw, s.endRaw));
     } else {

@@ -46,7 +46,7 @@ export class SeedlinkConnection {
     this.webSocket = new WebSocket(this.url, SEEDLINK_PROTOCOL);
     this.webSocket.binaryType = 'arraybuffer';
     const that = this;
-    this.webSocket.onopen = function(event) {
+    this.webSocket.onopen = function() {
       that.sendHello(that.webSocket)
       .then(function() {
         return that.sendCmdArray(that.webSocket, that.requestConfig);
@@ -106,7 +106,7 @@ export class SeedlinkConnection {
           this.errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
         }
      } catch(e) {
-console.assert(false, e);
+        console.assert(false, e);
         this.errorFn("Error, closing seedlink. "+e);
         this.close();
      }
