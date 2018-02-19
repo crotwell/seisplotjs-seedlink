@@ -33,7 +33,7 @@ export class RingserverConnection {
     * Result returned is an RSVP Promise.
     */
   pullId() {
-    return this.pullIdRaw().then(raw => {
+    return this.pullRaw(this.formIdURL()).then(raw => {
       let lines = raw.split('\n');
       let organization = lines[1];
       if (organization.startsWith(ORG)) {
@@ -46,34 +46,6 @@ export class RingserverConnection {
     });
   }
 
-  /** Pulls raw result from ringserver /id.
-    * Result returned is an RSVP Promise.
-    */
-  pullIdRaw() {
-    let mythis = this;
-    let promise = new RSVP.Promise(function(resolve, reject) {
-      let url = mythis.formIdURL();
-      let client = new XMLHttpRequest();
-      client.open("GET", url);
-      client.onreadystatechange = handler;
-      client.responseType = "text";
-      client.setRequestHeader("Accept", "text/plain");
-      client.send();
-
-      function handler() {
-        if (this.readyState === this.DONE) {
-          if (this.status === 200) {
-            resolve(this.response);
-          } else {
-            console.log("Reject pullIdRaw: host="+mythis.host()+" status="+this.status+" statusText:"+this.statusText);
-            reject(this);
-          }
-        }
-      }
-    });
-    return promise;
-  }
-
   /**
    *  Use numeric level (1-6) to pull just IDs from ringserver.
    *  In a default ringserver,
@@ -82,18 +54,22 @@ export class RingserverConnection {
    *  and level=2 would return all stations like
    *  CO_JSC
    *  If level is falsy/missing, level=6 is used.
-    * Result returned is an RSVP Promise.
+   *  The optional matchPattern is a regular expression, so for example
+   *  '.+_JSC_00_HH.' would get all HH? channels from any station name JSC.
+   *  Result returned is an RSVP Promise.
    */
-  pullStreamIds(level) {
+  pullStreamIds(level, matchPattern) {
     let queryParams = 'level=6';
     if (level && level > 0) { queryParams = 'level='+level; }
-    return this.pullStreamsRaw(queryParams).then(raw => {
+    if (matchPattern) { queryParams = queryParams+'&match='+matchPattern; }
+    const url = this.formStreamIdsURL(queryParams);
+    return this.pullRaw(url).then(raw => {
       return raw.split('\n');
     });
   }
 
   /**
-    * Pull streamd, including start and end times, from the ringserver.
+    * Pull streams, including start and end times, from the ringserver.
     * The optional matchPattern is a regular expression, so for example
     * '.+_JSC_00_HH.' would get all HH? channels from any station name JSC.
     * Result returned is an RSVP Promise.
@@ -101,7 +77,8 @@ export class RingserverConnection {
   pullStreams(matchPattern) {
     let queryParams = null;
     if (matchPattern) { queryParams = 'match='+matchPattern; }
-    return this.pullStreamsRaw(queryParams).then(raw => {
+    const url = this.formStreamsURL(queryParams);
+    return this.pullRaw(url).then(raw => {
       let lines = raw.split('\n');
       let out = {};
       out.accessTime = moment().utc();
@@ -126,10 +103,8 @@ export class RingserverConnection {
     * be formatted like URL query parameters, ie 'name=value&name=value'.
     * Result returned is an RSVP Promise.
     */
-  pullStreamsRaw(queryParams) {
-    let mythis = this;
+  pullRaw(url) {
     let promise = new RSVP.Promise(function(resolve, reject) {
-      let url = mythis.formStreamsURL(queryParams);
       let client = new XMLHttpRequest();
       client.open("GET", url);
       client.onreadystatechange = handler;
@@ -142,7 +117,7 @@ export class RingserverConnection {
           if (this.status === 200) {
             resolve(this.response);
           } else {
-            console.log("Reject pullStreamsRaw: "+mythis.host()+" "+this.status);
+            console.log("Reject pullRaw: "+url+" "+this.status);
             reject(this);
           }
         }
@@ -161,6 +136,10 @@ export class RingserverConnection {
 
   formStreamsURL(queryParams) {
     return this.formBaseURL()+'/streams'+(queryParams ? '?'+queryParams : '');
+  }
+
+  formStreamIdsURL(queryParams) {
+    return this.formBaseURL()+'/streamids'+(queryParams ? '?'+queryParams : '');
   }
 
 }
@@ -209,8 +188,14 @@ export class StreamStat {
     this.key = key;
     this.startRaw = start;
     this.endRaw = end;
-    this.start = moment(start+'Z');
-    this.end = moment(end+'Z');
+    if (this.startRaw.charAt(this.startRaw.length-1) != 'Z') {
+      this.startRaw = this.startRaw+'Z';
+    }
+    if (this.endRaw.charAt(this.endRaw.length-1) != 'Z') {
+      this.endRaw = this.endRaw+'Z';
+    }
+    this.start = moment(this.startRaw);
+    this.end = moment(this.endRaw);
   }
   calcLatency(accessTime) {
     return this.end.from(accessTime);
