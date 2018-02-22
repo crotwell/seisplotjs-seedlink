@@ -8,6 +8,8 @@ import * as miniseed from 'seisplotjs-miniseed';
 import * as RSVP from 'rsvp';
 import moment from 'moment';
 
+import {dataViewToString} from './util';
+
 /* reexport */
 export { miniseed, RSVP };
 
@@ -85,7 +87,7 @@ export class SeedlinkConnection {
     try {
        // let arrBuf = new ArrayBuffer(event.data);
         if (event.data.byteLength < 64) {
-          this.errorFn("message too small to be miniseed: "+event.data.byteLength +" "+arrayBufferToString(event.data));
+          this.errorFn("message too small to be miniseed: "+event.data.byteLength +" "+dataViewToString(new DataView(event.data)));
           return;
         }
         let slHeader = new DataView(event.data, 0, 8);
@@ -115,7 +117,7 @@ export class SeedlinkConnection {
   sendHello(webSocket) {
   let promise = new RSVP.Promise(function(resolve, reject) {
     webSocket.onmessage = function(event) {
-      let replyMsg = arrayBufferToString(event.data);
+      let replyMsg = dataViewToString(new DataView(event.data));
       let lines = replyMsg.trim().split('\r');
       if (lines.length == 2) {
         resolve(lines);
@@ -140,7 +142,7 @@ export class SeedlinkConnection {
   createCmdPromise(webSocket, mycmd) {
     let promise = new RSVP.Promise(function(resolve, reject) {
       webSocket.onmessage = function(event) {
-        let replyMsg = arrayBufferToString(event.data).trim();
+        let replyMsg = dataViewToString(new DataView(event.data)).trim();
         if (replyMsg === 'OK') {
           resolve(replyMsg);
         } else {
@@ -151,13 +153,4 @@ export class SeedlinkConnection {
     });
     return promise;
   }
-}
-
-export function arrayBufferToString(arrBuf) {
-  let dataView = new DataView(arrBuf);
-  let out = "";
-  for (let i=0; i< dataView.byteLength; i++) {
-    out += String.fromCharCode(dataView.getUint8(i));
-  }
-  return out;
 }

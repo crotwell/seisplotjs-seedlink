@@ -15,9 +15,16 @@ import {
   moment
 } from './ringserver-web';
 
+import {
+  DataLinkConnection,
+  DATALINK_PROTOCOL
+} from './datalink';
+
 export {
   SeedlinkConnection,
   SEEDLINK_PROTOCOL,
+  DataLinkConnection,
+  DATALINK_PROTOCOL,
   IRIS_HOST,
   RingserverConnection,
   stationsFromStreams,
