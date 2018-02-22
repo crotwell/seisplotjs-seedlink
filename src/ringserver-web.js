@@ -64,7 +64,7 @@ export class RingserverConnection {
     if (matchPattern) { queryParams = queryParams+'&match='+matchPattern; }
     const url = this.formStreamIdsURL(queryParams);
     return this.pullRaw(url).then(raw => {
-      return raw.split('\n');
+      return raw.split('\n').filter( line => line.length > 0);
     });
   }
 
@@ -127,7 +127,7 @@ export class RingserverConnection {
   }
 
   formBaseURL() {
-    return 'http://'+this.host()+(this.port()==80?'':':'+this.port());
+    return 'http://'+this.host()+(this.port()==80 ? '' : (':'+this.port()));
   }
 
   formIdURL() {
