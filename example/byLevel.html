@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8" />
+   <style>
+   div.realtimePlot {
+  height: 250px;
+}
+
+path.seispath {
+  stroke: skyblue;
+  fill: none;
+  stroke-width: 1px;
+}
+
+path.seisplot .orientZ {
+  stroke: seagreen;
+}
+
+path.seisplot .orientN {
+  stroke: red;
+}
+
+path.seisplot .orientE {
+  stroke: orange;
+}
+
+text.sublabel {
+  font-size: x-small;
+}
+
+.clickable {
+     cursor:pointer;
+     color:blue;
+     text-decoration:underline;
+}
+   </style>
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h3>Server</h3>
+<div class="serverId">
+</div>
+
+<h3>Streams</h3>
+<div class="realtime">
+<button id="pause">Pause</button>
+<button id="disconnect">Disconnect</button>
+</div>
+<div class="streams">
+  <ul class='uplevels'></ul>
+</div>
+
+<script src="polyfill.min.js"></script>
+<script src="seisplotjs_waveformplot_1.2.3_standalone.js"></script>
+<script src="seisplotjs_seedlink_1.2.0-alpha.1_standalone.js"></script>
+<script src="byLevel.js"></script>
+</body>
+</html>
