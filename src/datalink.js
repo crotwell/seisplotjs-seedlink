@@ -18,9 +18,11 @@ export const STREAM_MODE = "STREAM";
 export const MAX_PROC_NUM = Math.pow(2, 16)-2;
 export const USER_BROWSER = "browser";
 
-export const ERROR = "PACKET";
+export const ERROR = "ERROR";
 export const PACKET = "PACKET";
+export const STREAM = "STREAM";
 export const ENDSTREAM = "ENDSTREAM";
+export const MSEED_TYPE = "MSEED";
 
 let defaultHandleResponse = function(message) {
   console.log("Unhandled datalink response: "+message);
@@ -37,7 +39,8 @@ export class DataLinkConnection {
     // meant to be processId, so use 1 <= num <= 2^15 to be safe
     this.clientIdNum = Math.floor(Math.random() * MAX_PROC_NUM)+1;
     this.username = USER_BROWSER;
-    this.responseHandler = null;
+    this.responseResolve = null;
+    this.responseReject = null;
   }
 
 /** creates the websocket connection and sends the client
@@ -45,7 +48,6 @@ export class DataLinkConnection {
 * ID.
 */
   connect() {
-    console.log("connect");
     const that = this;
     return new RSVP.Promise(function(resolve, reject) {
       const webSocket = new WebSocket(that.url, DATALINK_PROTOCOL);
@@ -56,13 +58,12 @@ export class DataLinkConnection {
       };
       webSocket.onerror = function(event) {
         that.handleError(""+event);
+        reject(event);
       };
-      webSocket.onclose = function(event) {
+      webSocket.onclose = function() {
         that.webSocket = null; // clean up
-        that.handleError(event);
       };
       webSocket.onopen = function() {
-        console.log("webSocket.onopen");
         resolve(that);
       };
     }).then(datalink => {
@@ -74,25 +75,23 @@ export class DataLinkConnection {
   }
 
   stream() {
-    console.log("datalink stream");
     if (this.mode === STREAM_MODE) {return;}
     this.mode = STREAM_MODE;
-    this.sendDLCommand("STREAM");
+    this.sendDLCommand(STREAM);
   }
 
   endStream() {
-    console.log("datalink endstream");
     if (this.mode === QUERY_MODE) {return;}
     this.mode = QUERY_MODE;
     this.sendDLCommand(ENDSTREAM);
   }
 
   close() {
-    console.log("datalink close");
     if (this.webSocket) {
       this.endStream(); // end streaming just in case
       this.webSocket.close();
       this.webSocket = null;
+      this.mode = null;
     }
   }
 
@@ -129,7 +128,6 @@ export class DataLinkConnection {
       len+=dataString.length;
 
     }
-    console.log("encodeDLCommane len="+len+" cmdLen="+cmdLen);
     let rawPacket = new ArrayBuffer(len);
     let packet = new DataView(rawPacket);
     packet.setUint8(0, 68); // ascii D
@@ -138,33 +136,26 @@ export class DataLinkConnection {
     let i = 3;
     for (const c of command) {
       packet.setUint8(i, c.charCodeAt(0));
-      console.log(i+"-"+c+" "+c.charCodeAt(0));
       i++;
     }
     const SPACE = ' ';
     if (dataString && dataString.length > 0) {
       packet.setUint8(i, SPACE.charCodeAt(0)); // ascii space
-      console.log(i+"-"+SPACE+"-"+SPACE.charCodeAt(0));
       i++;
       for (const c of lenStr) {
         packet.setUint8(i, c.charCodeAt(0));
-        console.log(i+"-"+c+" "+c.charCodeAt(0));
         i++;
       }
       for (const c of dataString) {
         packet.setUint8(i, c.charCodeAt(0));
-        console.log(i+"-"+c+" "+c.charCodeAt(0));
         i++;
       }
     }
-    console.log("encode: DL<"+cmdLen+">"+command+" "+lenStr+"|"+dataString+" i="+i);
-console.log("  len="+len+"  lenStr='"+lenStr+"' cmdLen="+cmdLen);
-console.log("packet: ''"+dataViewToString(new DataView(rawPacket))+"'");
     return rawPacket;
   }
 
   sendDLCommand(command, dataString) {
-    console.log("send: "+command);
+    console.log("send: "+command+" | "+(dataString ? dataString : ""));
     const rawPacket = this.encodeDLCommand(command, dataString);
     this.webSocket.send(rawPacket);
   }
@@ -174,47 +165,60 @@ console.log("packet: ''"+dataViewToString(new DataView(rawPacket))+"'");
   * Returns a Promise that resolves with the webSocket MessageEvent.
   */
   awaitDLCommand(command, dataString) {
-    console.log("await "+command+" | "+dataString);
     let that = this;
     let promise = new RSVP.Promise(function(resolve, reject) {
-      console.log("setting handlers");
-      that.responseHandler = resolve;
-      that.responseError = reject;
-      console.log("send cmd");
+      that.responseResolve = resolve;
+      that.responseReject = reject;
       that.sendDLCommand(command, dataString);
     }).then(response => {
-      console.log("then after send cmd: "+response);
-        that.responseHandler = null;
-        that.responseError = null;
-        return response;
+      that.responseResolve = null;
+      that.responseReject = null;
+      return response;
+    }).catch(error => {
+      that.responseResolve = null;
+      that.responseReject = null;
+      throw error;
     });
     return promise;
   }
 
   handle(wsEvent) {
-    console.log("handle wsEvent");
     let dlPreHeader = new DataView(wsEvent.data, 0, 3);
     if ('D' === String.fromCharCode(dlPreHeader.getUint8(0))
         && 'L' === String.fromCharCode(dlPreHeader.getUint8(1))) {
       const headerLen = dlPreHeader.getUint8(2);
-      console.log("Got DL, headerLen: "+headerLen);
       const header = dataViewToString(new DataView(wsEvent.data, 3, headerLen));
-
-        console.log("   header: "+header+"  orig: "+dataViewToString(new DataView(wsEvent.data)));
+      //console.log("handle wsEvent   header: '"+header+"'");
       if (header.startsWith(PACKET)) {
         if (this.packetHandler) {
-          let packet = new DataLinkPacket(header, new DataView(wsEvent.data, 3+headerLen));
-          this.packetHandler(packet);
+          try {
+            let packet = new DataLinkPacket(header,
+                    new DataView(wsEvent.data, 3+headerLen));
+            this.packetHandler(packet);
+          } catch (e) {
+            this.errorHandler(e);
+          }
         } else {
           this.errorHandler(new Error("packetHandler not defined"));
         }
-      } else if (header.startsWith(ERROR)) {
-        const split = header.split();
-        const dataSize = Number.parseInt(split[2]);
-        const errorMsg = dataViewToString(new DataView(wsEvent.data, 3+headerLen));
-        this.handleError(errorMsg);
-      } else if (this.responseHandler) {
-        this.responseHandler(header);
+      } else if (header.startsWith(ERROR) || header.startsWith("OK")) {
+        const split = header.split(' ');
+        const value = split[1];
+        // not needed as one datalink packet per web socket event
+        // const dataSize = Number.parseInt(split[2]);
+        const message = dataViewToString(new DataView(wsEvent.data, 3+headerLen));
+        if (header.startsWith(ERROR)) {
+          this.handleError("value="+value+" "+message);
+        } else if (header.startsWith("OK")) {
+          if (this.responseResolve) {
+            this.responseResolve(header+" | "+message);
+            console.log(header+" | "+message);
+          } else {
+            console.log("OK without responseResolve");
+          }
+        }
+      } else if (this.responseResolve) {
+        this.responseResolve(header);
       } else {
         defaultHandleResponse(header);
       }
@@ -224,8 +228,8 @@ console.log("packet: ''"+dataViewToString(new DataView(rawPacket))+"'");
   }
 
   handleError(error) {
-    if (this.responseError) {
-      this.responseError(error);
+    if (this.responseReject) {
+      this.responseReject(error);
     }
     if (this.errorHandler) {
       this.errorHandler(error);
@@ -238,14 +242,21 @@ export class DataLinkPacket {
   constructor(header, dataview) {
     this.header = header;
     this.data = dataview;
-    let split = this.header.split();
-    this.streamId = split[0];
-    this.pktid = split[1];
-    this.dataSize = Number.parseInt(split[5]);
+    let split = this.header.split(' ');
+    this.streamId = split[1];
+    this.pktid = split[2];
+    this.hppackettime = split[3];
+    this.hppacketstart = split[4];
+    this.hppacketend = split[5];
+    this.dataSize = Number.parseInt(split[6]);
     if (dataview.byteLength < this.dataSize) {
       throw new Error("not enough bytes in dataview for packet: "+this.dataSize);
     }
-    this.miniseed = new miniseed.DataRecord(dataView);
+    if (this.streamId.endsWith(MSEED_TYPE)) {
+      this.miniseed = new miniseed.DataRecord(dataview);
+    } else {
+      throw new Error("Unknown DataLink Packet type: "+this.streamId);
+    }
   }
 
 }
