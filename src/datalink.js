@@ -1,3 +1,8 @@
+// @flow
+
+/*global DataView */
+/*global WebSocket */
+
 /**
  * Philip Crotwell
  * University of South Carolina, 2016
@@ -29,8 +34,17 @@ let defaultHandleResponse = function(message) {
 };
 
 export class DataLinkConnection {
-
-  constructor(url, packetHandler, errorHandler) {
+  url: string;
+  mode: string | null;
+  packetHandler: (packet: DataLinkPacket) => void;
+  errorHandler: (error: Error) => void;
+  serverId: string | null;
+  clientIdNum: number;
+  username: string;
+  responseResolve: null | (response: string) => void;
+  responseReject: null | (error: Error) => void;
+  webSocket: WebSocket | null;
+  constructor(url :string, packetHandler: (packet: DataLinkPacket) => void, errorHandler: (error: Error) => void) {
     this.url = url;
     this.mode = QUERY_MODE;
     this.packetHandler = packetHandler;
@@ -57,7 +71,7 @@ export class DataLinkConnection {
         that.handle(event);
       };
       webSocket.onerror = function(event) {
-        that.handleError(""+event);
+        that.handleError(new Error(""+miniseed.model.stringify(event)));
         reject(event);
       };
       webSocket.onclose = function() {
@@ -74,22 +88,22 @@ export class DataLinkConnection {
     });
   }
 
-  stream() {
+  stream() :void {
     if (this.mode === STREAM_MODE) {return;}
     this.mode = STREAM_MODE;
-    this.sendDLCommand(STREAM);
+    this.sendDLCommand(STREAM, "");
   }
 
-  endStream() {
+  endStream() :void {
     if (this.mode === QUERY_MODE) {return;}
     this.mode = QUERY_MODE;
-    this.sendDLCommand(ENDSTREAM);
+    this.sendDLCommand(ENDSTREAM, "");
   }
 
-  close() {
+  close() :void {
     if (this.webSocket) {
       this.endStream(); // end streaming just in case
-      this.webSocket.close();
+      if (this.webSocket) {this.webSocket.close();}
       this.webSocket = null;
       this.mode = null;
     }
@@ -99,7 +113,7 @@ export class DataLinkConnection {
   * Send a ID Command. Command is a string.
   * Returns a Promise.
   */
-  sendId() {
+  sendId() :Promise<string> {
     const that = this;
     return this.awaitDLCommand("ID seisplotjs:"+this.username+":"+this.clientIdNum+":javascript")
     .then(replyMsg => {
@@ -107,7 +121,7 @@ export class DataLinkConnection {
           that.serverId = replyMsg;
           return replyMsg;
         } else {
-          throw new Error("not ID line: "+replyMsg);
+          throw new Error("not ID line: "+miniseed.model.stringify(replyMsg));
         }
     });
   }
@@ -117,7 +131,7 @@ export class DataLinkConnection {
  * but not for a PACKET, which would have binary data.
  * PACKET is what client receives, but should never
  * send as we do not generate data. */
-  encodeDLCommand(command, dataString) {
+  encodeDLCommand(command :string, dataString ?:string) :ArrayBuffer {
     let cmdLen = command.length;
     let len = 3+command.length;
     let lenStr = "";
@@ -154,17 +168,21 @@ export class DataLinkConnection {
     return rawPacket;
   }
 
-  sendDLCommand(command, dataString) {
+  sendDLCommand(command :string, dataString ?:string) :void {
     console.log("send: "+command+" | "+(dataString ? dataString : ""));
     const rawPacket = this.encodeDLCommand(command, dataString);
-    this.webSocket.send(rawPacket);
+    if (this.webSocket) {
+      this.webSocket.send(rawPacket);
+    } else {
+      throw new Error("WebSocket has been closed.");
+    }
   }
 
   /**
   * Send a DataLink Command and await the response. Command is a string.
   * Returns a Promise that resolves with the webSocket MessageEvent.
   */
-  awaitDLCommand(command, dataString) {
+  awaitDLCommand(command :string, dataString ?:string) :Promise<string> {
     let that = this;
     let promise = new RSVP.Promise(function(resolve, reject) {
       that.responseResolve = resolve;
@@ -182,18 +200,19 @@ export class DataLinkConnection {
     return promise;
   }
 
-  handle(wsEvent) {
-    let dlPreHeader = new DataView(wsEvent.data, 0, 3);
+  handle(wsEvent :MessageEvent ) {
+    const rawData :ArrayBuffer = ((wsEvent.data :any) :ArrayBuffer);
+    let dlPreHeader = new DataView(rawData, 0, 3);
     if ('D' === String.fromCharCode(dlPreHeader.getUint8(0))
         && 'L' === String.fromCharCode(dlPreHeader.getUint8(1))) {
       const headerLen = dlPreHeader.getUint8(2);
-      const header = dataViewToString(new DataView(wsEvent.data, 3, headerLen));
+      const header = dataViewToString(new DataView(rawData, 3, headerLen));
       //console.log("handle wsEvent   header: '"+header+"'");
       if (header.startsWith(PACKET)) {
         if (this.packetHandler) {
           try {
             let packet = new DataLinkPacket(header,
-                    new DataView(wsEvent.data, 3+headerLen));
+                    new DataView(rawData, 3+headerLen));
             this.packetHandler(packet);
           } catch (e) {
             this.errorHandler(e);
@@ -206,9 +225,9 @@ export class DataLinkConnection {
         const value = split[1];
         // not needed as one datalink packet per web socket event
         // const dataSize = Number.parseInt(split[2]);
-        const message = dataViewToString(new DataView(wsEvent.data, 3+headerLen));
+        const message = dataViewToString(new DataView(rawData, 3+headerLen));
         if (header.startsWith(ERROR)) {
-          this.handleError("value="+value+" "+message);
+          this.handleError(new Error("value="+value+" "+message));
         } else if (header.startsWith("OK")) {
           if (this.responseResolve) {
             this.responseResolve(header+" | "+message);
@@ -227,19 +246,28 @@ export class DataLinkConnection {
     }
   }
 
-  handleError(error) {
+  handleError(error: Error) {
     if (this.responseReject) {
       this.responseReject(error);
     }
     if (this.errorHandler) {
       this.errorHandler(error);
     }
-    console.log("handleError: "+error);
+    console.log("handleError: "+error.message);
   }
 }
 
 export class DataLinkPacket {
-  constructor(header, dataview) {
+  header: string;
+  data: DataView;
+  streamId: string;
+  pktid: string;
+  hppackettime: string;
+  hppacketstart: string;
+  hppacketend: string;
+  dataSize: number;
+  miniseed: miniseed.DataRecord;
+  constructor(header :string, dataview :DataView) {
     this.header = header;
     this.data = dataview;
     let split = this.header.split(' ');

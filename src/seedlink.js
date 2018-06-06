@@ -1,8 +1,12 @@
+// @flow
+
 /**
  * Philip Crotwell
  * University of South Carolina, 2016
  * http://www.seis.sc.edu
  */
+
+ /*global DataView*/
 
 import * as miniseed from 'seisplotjs-miniseed';
 import * as RSVP from 'rsvp';
@@ -20,7 +24,12 @@ RSVP.on('error', function(reason) {
 });
 
 export class SeedlinkConnection {
-
+  url :string;
+  requestConfig :Array<string>;
+  receiveMiniseedFn :function;
+  errorFn :function;
+  webSocket :WebSocket;
+  command :string;
   /** creates a seedlink websocket connection to the given url.
     * requestConfig is an array of seedlink commands
     * like:
@@ -32,7 +41,7 @@ export class SeedlinkConnection {
     * and 'miniseed', a single miniseed record.
     * The connection is not made until the connect() method is called.
     */
-  constructor(url, requestConfig, receiveMiniseedFn, errorFn) {
+  constructor(url :string, requestConfig :Array<string>, receiveMiniseedFn :function, errorFn :function) {
     this.url = url;
     this.requestConfig = requestConfig;
     this.receiveMiniseedFn = receiveMiniseedFn;
@@ -40,7 +49,7 @@ export class SeedlinkConnection {
     this.command = 'DATA';
   }
 
-  setTimeCommand(startDate) {
+  setTimeCommand(startDate :moment) {
     this.command = "TIME "+moment(startDate).format("YYYY,MM,DD,HH,mm,ss");
   }
 
@@ -69,35 +78,39 @@ export class SeedlinkConnection {
     };
   }
 
-  close() {
+  close() :void {
     if (this.webSocket) {
       this.webSocket.close();
     }
   }
 
-  handle(event) {
-    if (event.data.byteLength < 64) {
+  handle(event :MessageEvent ) :void {
+    //for flow
+    const data = ((event.data : any) :ArrayBuffer);
+    if (data.byteLength < 64) {
       //assume text
     } else {
       this.handleMiniseed(event);
     }
   }
 
-  handleMiniseed(event) {
+  handleMiniseed(event :MessageEvent) :void {
+    //for flow
+    const data = ((event.data : any) :ArrayBuffer);
     try {
        // let arrBuf = new ArrayBuffer(event.data);
-        if (event.data.byteLength < 64) {
-          this.errorFn("message too small to be miniseed: "+event.data.byteLength +" "+dataViewToString(new DataView(event.data)));
+        if (data.byteLength < 64) {
+          this.errorFn("message too small to be miniseed: "+data.byteLength +" "+dataViewToString(new DataView(data)));
           return;
         }
-        let slHeader = new DataView(event.data, 0, 8);
+        let slHeader = new DataView(data, 0, 8);
         // check for 'SL' at start
         if (slHeader.getInt8(0) === 83 && slHeader.getInt8(1) === 76) {
           let seqStr = '';
           for (let i=0; i<6; i++) {
             seqStr = seqStr + String.fromCharCode(slHeader.getInt8(2+i));
           }
-          let dataView = new DataView(event.data, 8, event.data.byteLength-8);
+          let dataView = new DataView(data, 8, data.byteLength-8);
           let out = {
             rawsequence: seqStr,
             sequence: parseInt(seqStr, 16),
@@ -114,10 +127,12 @@ export class SeedlinkConnection {
      }
   }
 
-  sendHello(webSocket) {
+  sendHello(webSocket :WebSocket) :Promise<string> {
   let promise = new RSVP.Promise(function(resolve, reject) {
     webSocket.onmessage = function(event) {
-      let replyMsg = dataViewToString(new DataView(event.data));
+      //for flow
+      const data = ((event.data : any) :ArrayBuffer);
+      let replyMsg = dataViewToString(new DataView(data));
       let lines = replyMsg.trim().split('\r');
       if (lines.length == 2) {
         resolve(lines);
@@ -130,7 +145,7 @@ export class SeedlinkConnection {
   return promise;
 }
 
-  sendCmdArray(webSocket, cmd) {
+  sendCmdArray(webSocket :WebSocket, cmd :Array<string>) :Promise<string> {
     let that = this;
     return cmd.reduce(function(cur, next) {
       return cur.then(function() {
@@ -139,10 +154,12 @@ export class SeedlinkConnection {
     }, RSVP.resolve());
   }
 
-  createCmdPromise(webSocket, mycmd) {
+  createCmdPromise(webSocket :WebSocket, mycmd :string) :Promise<string> {
     let promise = new RSVP.Promise(function(resolve, reject) {
       webSocket.onmessage = function(event) {
-        let replyMsg = dataViewToString(new DataView(event.data)).trim();
+        //for flow
+        const data = ((event.data : any) :ArrayBuffer);
+        let replyMsg = dataViewToString(new DataView(data)).trim();
         if (replyMsg === 'OK') {
           resolve(replyMsg);
         } else {

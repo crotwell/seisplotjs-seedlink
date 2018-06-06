@@ -1,3 +1,5 @@
+// @flow
+
 /**
  * Philip Crotwell
  * University of South Carolina, 2017
@@ -9,22 +11,38 @@ import moment from 'moment';
 
 export { RSVP, moment };
 
+import * as miniseed from 'seisplotjs-miniseed';
+
+import { hasArgs, hasNoArgs, isStringArg, isNumArg, isDef } from './util';
+
+export type RingserverVersion = {
+  'ringserverVersion': string,
+  'serverId': string
+};
+
+export type StreamsResult = {
+  accessTime :moment,
+  streams: Array<StreamStat>
+};
+
 export const IRIS_HOST = 'rtserve.iris.washington.edu';
 
 const ORG = 'Organization: ';
 
 export class RingserverConnection {
-  constructor(host, port) {
+  _host: string;
+  _port: number;
+  constructor(host ?:string, port ?:number) {
     this._host = (host ? host : IRIS_HOST);
     this._port = (port ? port : 80);
   }
 
-  host(value) {
-    return arguments.length ? (this._host = value, this) : this._host;
+  host(value ?:string) :string | RingserverConnection {
+    return hasArgs(value) ? (this._host = value, this) : this._host;
   }
 
-  port(value) {
-    return arguments.length ? (this._port = value, this) : this._port;
+  port(value ?:number) :number | RingserverConnection {
+    return hasArgs(value) ? (this._port = value, this) : this._port;
   }
 
 
@@ -32,7 +50,7 @@ export class RingserverConnection {
     * 'ringserverVersion' and 'serverId' fields.
     * Result returned is an RSVP Promise.
     */
-  pullId() {
+  pullId() :Promise<RingserverVersion> {
     return this.pullRaw(this.formIdURL()).then(raw => {
       let lines = raw.split('\n');
       let organization = lines[1];
@@ -58,7 +76,7 @@ export class RingserverConnection {
    *  '.+_JSC_00_HH.' would get all HH? channels from any station name JSC.
    *  Result returned is an RSVP Promise.
    */
-  pullStreamIds(level, matchPattern) {
+  pullStreamIds(level :number, matchPattern :string) :Promise<Array<string>> {
     let queryParams = 'level=6';
     if (level && level > 0) { queryParams = 'level='+level; }
     if (matchPattern) { queryParams = queryParams+'&match='+matchPattern; }
@@ -74,8 +92,8 @@ export class RingserverConnection {
     * '.+_JSC_00_HH.' would get all HH? channels from any station name JSC.
     * Result returned is an RSVP Promise.
     */
-  pullStreams(matchPattern) {
-    let queryParams = null;
+  pullStreams(matchPattern :string ) :Promise<StreamsResult> {
+    let queryParams = "";
     if (matchPattern) { queryParams = 'match='+matchPattern; }
     const url = this.formStreamsURL(queryParams);
     return this.pullRaw(url).then(raw => {
@@ -103,7 +121,7 @@ export class RingserverConnection {
     * be formatted like URL query parameters, ie 'name=value&name=value'.
     * Result returned is an RSVP Promise.
     */
-  pullRaw(url) {
+  pullRaw(url :string) :Promise<string>{
     let promise = new RSVP.Promise(function(resolve, reject) {
       let client = new XMLHttpRequest();
       client.open("GET", url);
@@ -126,33 +144,34 @@ export class RingserverConnection {
     return promise;
   }
 
-  formBaseURL() {
-    return 'http://'+this.host()+(this.port()==80 ? '' : (':'+this.port()));
+  formBaseURL() :string {
+    return 'http://'+this._host+(this._port==80 ? '' : (':'+this._port));
   }
 
-  formIdURL() {
+  formIdURL() :string {
     return this.formBaseURL()+'/id';
   }
 
-  formStreamsURL(queryParams) {
-    return this.formBaseURL()+'/streams'+(queryParams ? '?'+queryParams : '');
+  formStreamsURL(queryParams :string) :string {
+    return this.formBaseURL()+'/streams'+((queryParams && queryParams.length > 0) ? '?'+queryParams : '');
   }
 
-  formStreamIdsURL(queryParams) {
-    return this.formBaseURL()+'/streamids'+(queryParams ? '?'+queryParams : '');
+  formStreamIdsURL(queryParams :string) :string {
+    return this.formBaseURL()+'/streamids'+((queryParams && queryParams.length > 0) ? '?'+queryParams : '');
   }
 
 }
 
-export function stationsFromStreams(streams) {
-  let out = new Map();
+export function stationsFromStreams(streams :Array<StreamStat>) :Array<StreamStat> {
+  let out :Map<string, StreamStat> = new Map();
   for (const s of streams) {
     const nslc = nslcSplit(s.key);
     const staKey = nslc.networkCode+"."+nslc.stationCode;
-    if (!out.has(staKey)) {
-      out.set(staKey, new StreamStat(staKey, s.startRaw, s.endRaw));
+    let stat = out.get(staKey);
+    if (! isDef(stat)) {
+      stat = new StreamStat(staKey, s.startRaw, s.endRaw);
+      out.set(staKey, stat);
     } else {
-      let stat = out.get(staKey);
       if (stat.start.isAfter(s.start)) {
         stat.start = s.start;
         stat.startRaw = s.startRaw;
@@ -166,7 +185,15 @@ export function stationsFromStreams(streams) {
   return Array.from(out.values());
 }
 
-export function nslcSplit(id) {
+export type NSLCType = {
+  type: string,
+  networkCode :string,
+  stationCode :string,
+  locationCode :string,
+  channelCode :string
+};
+
+export function nslcSplit(id :string) :NSLCType {
   let split = id.split('/');
   let out = {};
   out.type = split[1];
@@ -184,7 +211,12 @@ export function nslcSplit(id) {
 }
 
 export class StreamStat {
-  constructor(key, start, end) {
+  key :string;
+  startRaw :string;
+  endRaw :string;
+  start :moment;
+  end :moment;
+  constructor(key :string, start :moment, end :moment) {
     this.key = key;
     this.startRaw = start;
     this.endRaw = end;
@@ -205,7 +237,7 @@ export class StreamStat {
     this.startRaw = start; // reset to unchanged strings
     this.endRaw = end;
   }
-  calcLatency(accessTime) {
+  calcLatency(accessTime :moment) :moment.duration {
     return this.end.from(accessTime);
   }
 }
