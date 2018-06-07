@@ -23,11 +23,17 @@ RSVP.on('error', function(reason) {
   console.assert(false, reason);
 });
 
+export type SequencedDataRecord = {
+  rawsequence: string,
+  sequence: number,
+  miniseed: miniseed.DataRecord
+};
+
 export class SeedlinkConnection {
   url :string;
   requestConfig :Array<string>;
-  receiveMiniseedFn :function;
-  errorFn :function;
+  receiveMiniseedFn :(packet: SequencedDataRecord) => void;
+  errorFn :(error: Error) => void;
   webSocket :WebSocket;
   command :string;
   /** creates a seedlink websocket connection to the given url.
@@ -41,7 +47,7 @@ export class SeedlinkConnection {
     * and 'miniseed', a single miniseed record.
     * The connection is not made until the connect() method is called.
     */
-  constructor(url :string, requestConfig :Array<string>, receiveMiniseedFn :function, errorFn :function) {
+  constructor(url :string, requestConfig :Array<string>, receiveMiniseedFn :(packet: SequencedDataRecord) => void, errorFn :(error: Error) => void) {
     this.url = url;
     this.requestConfig = requestConfig;
     this.receiveMiniseedFn = receiveMiniseedFn;
@@ -100,7 +106,7 @@ export class SeedlinkConnection {
     try {
        // let arrBuf = new ArrayBuffer(event.data);
         if (data.byteLength < 64) {
-          this.errorFn("message too small to be miniseed: "+data.byteLength +" "+dataViewToString(new DataView(data)));
+          this.errorFn(new Error("message too small to be miniseed: "+data.byteLength +" "+dataViewToString(new DataView(data))));
           return;
         }
         let slHeader = new DataView(data, 0, 8);
@@ -118,7 +124,7 @@ export class SeedlinkConnection {
           };
           this.receiveMiniseedFn(out);
         } else {
-          this.errorFn("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1));
+          this.errorFn(new Error("Not a seedlink packet, no starting SL: "+slHeader.getInt8(0)+' '+slHeader.getInt8(1)));
         }
      } catch(e) {
         console.assert(false, e);
@@ -147,8 +153,8 @@ export class SeedlinkConnection {
 
   sendCmdArray(webSocket :WebSocket, cmd :Array<string>) :Promise<string> {
     let that = this;
-    return cmd.reduce(function(cur, next) {
-      return cur.then(function() {
+    return cmd.reduce(function(accum :Promise<string>, next :string) {
+      return accum.then(function() {
         return that.createCmdPromise(webSocket, next);
       });
     }, RSVP.resolve());
