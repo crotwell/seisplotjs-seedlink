@@ -281,7 +281,7 @@ export class DataLinkPacket {
       throw new Error("not enough bytes in dataview for packet: "+this.dataSize);
     }
     if (this.streamId.endsWith(MSEED_TYPE)) {
-      this.miniseed = new miniseed.DataRecord(dataview);
+      this.miniseed = miniseed.parseSingleDataRecord(dataview);
     } else {
       throw new Error("Unknown DataLink Packet type: "+this.streamId);
     }

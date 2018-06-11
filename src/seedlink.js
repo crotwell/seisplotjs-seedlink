@@ -120,7 +120,7 @@ export class SeedlinkConnection {
           let out = {
             rawsequence: seqStr,
             sequence: parseInt(seqStr, 16),
-            miniseed: new miniseed.DataRecord(dataView)
+            miniseed: miniseed.parseSingleDataRecord(dataView)
           };
           this.receiveMiniseedFn(out);
         } else {
