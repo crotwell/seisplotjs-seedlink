@@ -63,8 +63,9 @@ var callbackFn = function(slPacket) {
     svgParent.select("p.waitingondata").remove();
     var seisDiv = svgParent.append('div').attr('class', codes);
 //    seisDiv.append('p').text(codes);
-    var plotDiv = seisDiv.append('div').attr('class', 'realtimePlot');
+    var plotDiv = seisDiv.append('div').classed('realtimePlot', true).classed('overlayPlot', false);
     var seisPlot = new wp.Seismograph(plotDiv, [seismogram], timeWindow.start, timeWindow.end);
+    seisPlot.svg.classed('realtimePlot', true).classed('overlayPlot', false)
     seisPlot.disableWheelZoom();
     seisPlot.setXSublabel(codes);
     seisPlot.setMargin(margin );
