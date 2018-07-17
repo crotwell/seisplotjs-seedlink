@@ -25,6 +25,11 @@ if (protocol == 'https:') {
 // not work from https pages as you cannot use non-encrypted (ws)
 // loaded from a https web page
 //
+
+if (wsProtocol == 'wss:' && host == IRIS_HOST) {
+  console.log("IRIS currently does not support connections from https pages, I will attempt anyway, but you may wish to try from a http page instead.");
+}
+
 var IRIS_HOST = "rtserve.iris.washington.edu";
 var host = IRIS_HOST;
 var port = 80;

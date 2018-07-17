@@ -30,6 +30,10 @@ if (protocol == 'https:') {
   wsProtocol = 'wss:';
 }
 
+if (wsProtocol == 'wss:' && host == IRIS_HOST) {
+  console.log("IRIS currently does not support connections from https pages, I will attempt anyway, but you may wish to try from a http page instead.");
+}
+
 // set to true to create websocket back to same server
 // assuming this page is server directly out of ringserver
 var direct_ringserver = false;

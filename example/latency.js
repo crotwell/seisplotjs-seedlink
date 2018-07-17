@@ -19,11 +19,7 @@ const maxQuakeRadius=10;
 const netCode = 'CO';
 var match = '^'+netCode+'_.+';
 
-// default is IRIS, but CORS is broken
-//var conn = new seedlink.RingserverConnection();
-//var conn = new ringserver.RingserverConnection('thecloud.seis.sc.edu', 6382);
-var conn = new seedlink.RingserverConnection('eeyore.seis.sc.edu', 6382);
-
+var conn = new seedlink.RingserverConnection();
 
 
 seedlink.RSVP.on('error', function(reason) {
