@@ -28,4 +28,12 @@ you depend on this package from another npm package.
 
 The example is available at [here](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/)
 
-There are two examples. The first, consoleLogSeedlink, makes the seedlink websocket connection and logs each arriving packet into a textarea. The second, multipleChans.html, plots the waveforms using [seisplotjs-waveformplot](http://github.com/crotwell/seisplotjs-waveformplot). The first just requires the standalone js file output from ```npm run standalone``` while the second also requires the standalone js file from seisplotjs-waveformplot.
+There are two examples. The first,
+[consoleLogSeedlink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/consoleLogSeedlink.html),
+ makes the seedlink websocket connection and logs each arriving packet into a textarea. The second,
+ [seedlink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/seedlink.html)
+ , plots the waveforms using [seisplotjs-waveformplot](http://github.com/crotwell/seisplotjs-waveformplot). The first just requires the standalone js file output from ```npm run standalone``` while the second also requires the standalone js file from seisplotjs-waveformplot.
+
+Two additional examples,
+[consoleLogDataLink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/consoleLogDataLink.html)
+ and [datalink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/datalink.html) are similar to the above but use the DataLink protocol instead of SeedLink.
