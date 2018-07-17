@@ -1,5 +1,5 @@
 # seisplotjs-seedlink
-Connect to a [ringserver](https://seiscode.iris.washington.edu/projects/ringserver) seedlink server using websockets and received miniseed data from it. The server must be capable of accepting http connections and upgrading them to websockets for this to work.
+Connect to a [ringserver](https://seiscode.iris.washington.edu/projects/ringserver) seedlink or datalink server using websockets and received miniseed data from it. The server must be capable of accepting http connections and upgrading them to websockets for this to work.
 
 See
 
