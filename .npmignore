@@ -1,4 +1,5 @@
 src/
+flow-typed/
 .DS_Store
 .git
 block/
