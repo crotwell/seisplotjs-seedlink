@@ -1,3 +1,5 @@
+[![npm](https://img.shields.io/npm/v/seisplotjs-seedlink.svg)](https://www.npmjs.com/package/seisplotjs-seedlink)
+
 # seisplotjs-seedlink
 Connect to a [ringserver](https://seiscode.iris.washington.edu/projects/ringserver) seedlink or datalink server using websockets and received miniseed data from it. The server must be capable of accepting http connections and upgrading them to websockets for this to work.
 
@@ -7,13 +9,13 @@ http://ds.iris.edu/ds/nodes/dmc/services/seedlink/
 
 http://www.seiscomp3.org/wiki/doc/applications/seedlink
 
-### Building
+### Install
 
 ```
 npm i seisplotjs-seedlink
 ```
 
-or
+### Building
 
 You need [npm](http://npmjs.com) installed first. Then run ```npm install``` to pull in dependencies and install the package locally.
 
@@ -37,3 +39,6 @@ There are two examples. The first,
 Two additional examples,
 [consoleLogDataLink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/consoleLogDataLink.html)
  and [datalink](http://www.seis.sc.edu/~crotwell/seisplotjs_demo/realtime/datalink.html) are similar to the above but use the DataLink protocol instead of SeedLink.
+
+
+ [API Documentation](http://www.seis.sc.edu/software/seisplotjs/seedlink/)

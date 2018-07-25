@@ -1,0 +1,63 @@
+toc:
+  - name: Usage
+    description: |
+      Generally either
+      ```
+      import * as seedlink from 'seisplotjs-seedlink'
+      seedlink.xxxx
+      ```
+      or
+
+      ```
+      import * as seisplotjs from 'seisplotjs'
+      seisplotjs.seedlink.xxxx
+      ```
+
+  - name: Core Functionality
+    description: |
+      Core functions for using the Seedlink, Datalink and related services
+  - RingserverConnection
+  - DataLinkConnection
+  - SeedlinkConnection
+  - stationsFromStreams
+
+  - name: Core Classes and Constants
+    description: |
+      Core classes returned from the above functions.
+  - SequencedDataRecord
+  - IRIS_HOST
+  - SEEDLINK_PROTOCOL
+  - DATALINK_PROTOCOL
+  - RingserverVersion
+  - QUERY_MODE
+  - STREAM_MODE
+  - MAX_PROC_NUM
+  - USER_BROWSER
+  - ERROR
+  - PACKET
+  - STREAM
+  - ENDSTREAM
+  - MSEED_TYPE
+  - NSLCType
+  - StreamsResult
+  - StreamStat
+  - DataLinkPacket
+
+
+  - name: Re-export
+    description: |
+      Re-exporting imported modules for easier reuse.
+  - miniseed
+  - moment
+  - RSVP
+
+
+  - name: Other/Private
+    description: |
+      Stuff I forgot to put in the TOC.
+  - hasArgs
+  - hasNoArgs
+  - isStringArg
+  - isNumArg
+  - dataViewToString
+  - nslcSplit
