@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="utf-8" />
+   <style>
+   div.realtimePlot {
+  height: 250px;
+}
+
+text.sublabel {
+  font-size: x-small;
+}
+
+.clickable {
+     cursor:pointer;
+     color:blue;
+     text-decoration:underline;
+}
+   </style>
+   <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h3>Server</h3>
+<div class="host">
+</div>
+
+<h3>Display</h3>
+<div class="myseisplot">
+</div>
+
+<script xxsrc="https://cdnjs.cloudflare.com/ajax/libs/babel-polyfill/6.26.0/polyfill.min.js"></script>
+<script src="seisplotjs_waveformplot_1.2.5-alpha.1_standalone.js"></script>
+<script src="seisplotjs_fdsnstation_1.1.1_standalone.js"></script>
+<script src="seisplotjs_seedlink_1.3.0-alpha.0_standalone.js"></script>
+<script>
+let d3 = seisplotjs_waveformplot.d3;
+let miniseed = seisplotjs_waveformplot.miniseed;
+let mseedArchive = new seisplotjs_seedlink.MSeedArchive("http://eeyore.seis.sc.edu:6384", "%n/%s/%Y/%j/%n.%s.%l.%c.%Y.%j.%H");
+let hostDiv = d3.select("div.host");
+let seismograph;
+hostDiv.append("p").text("Base URL: "+mseedArchive.getRootUrl());
+hostDiv.append("p").text("Pattern: "+mseedArchive.getPattern());
+hostDiv.append("p").text("Check: "+mseedArchive.checkPattern(mseedArchive.getPattern()));
+let start = moment.utc('2018-07-02T02:01:23');
+let end = moment.utc('2018-07-02T02:58:23');
+let net = 'CO';
+let sta = 'TEEBA';
+let loc = '00';
+let chan = 'LH1'
+let stationQuery = new seisplotjs_fdsnstation.StationQuery()
+  .networkCode(net)
+  .stationCode(sta)
+  .locationCode(loc)
+  .channelCode(chan)
+  .startTime(start)
+  .endTime(end)
+  .queryChannels()
+  .then(netArray => {
+    // first channel...
+    return netArray[0].stations()[0].channels()[0];
+  }).then(channel => {
+    hostDiv.append("p").text("Time: "+start.toISOString()+" "+end.toISOString());
+    hostDiv.append("p").text("Channel: "+net+"."+sta+"."+loc+"."+chan);
+    return mseedArchive.loadDataForChannel(channel, start, end);
+    //return mseedArchive.loadData(net, sta, loc, chan, start, end);
+  }).then(dataRecords => {
+      let byChannel = miniseed.byChannel(dataRecords);
+      let keys = Array.from(byChannel.keys());
+      let segments = [];
+      for(let i=0; i<keys.length; i++) {
+        let key = keys[i];
+        segments.push(miniseed.merge(byChannel.get(key)));
+      }
+      let svgParent = seisplotjs_waveformplot.d3.select("div.myseisplot");
+      if (segments.length > 0) {
+        svgParent.selectAll("p").remove();
+        let s = segments[0];
+        let svgDiv = svgParent.append("div");
+        let startDate = null;
+        let endDate = null;
+        svgDiv.classed("svg-container-wide", true);
+        if ( ! seismograph) {
+          seismograph = new seisplotjs_waveformplot.Seismograph(svgDiv, s, start, end);
+          seismograph.svg.classed("overlayPlot", true);// for css styling
+          seismograph.setDoRMean(false);
+          if (seismograph.yScale.domain()[1] > 1 && seismograph.yScale.domain()[1] <= 100) {
+            seismograph.setAmplitudeFormatter(d3.format(",.1f"));
+          }
+          seismograph.calcScaleDomain();
+        } else {
+          seismograph.setPlotStart(start)
+            .setPlotEnd(end)
+          seismograph.append(s);//append first one
+        }
+        for ( let i=1; i< segments.length; i++) {
+          seismograph.append(segments[i]);
+        }
+        seismograph.draw();
+      } else {
+        svgParent.append('p').text("No Data");
+      }
+    }).catch(err => {
+      let svgParent = seisplotjs_waveformplot.d3.select("div.myseisplot");
+      svgParent.append('p').text("No Data");
+      svgParent.append('p').text(err);
+      throw err;
+    });
+
+</script>
+</body>
+</html>

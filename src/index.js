@@ -21,6 +21,8 @@ import {
   DATALINK_PROTOCOL
 } from './datalink';
 
+import { MSeedArchive } from './mseedarchive';
+
 export {
   SeedlinkConnection,
   SEEDLINK_PROTOCOL,
@@ -31,6 +33,7 @@ export {
   stationsFromStreams,
   nslcSplit,
   StreamStat,
+  MSeedArchive,
   miniseed,
   RSVP,
   moment
