@@ -36,14 +36,36 @@ text.sublabel {
 <script>
 let d3 = seisplotjs_waveformplot.d3;
 let miniseed = seisplotjs_waveformplot.miniseed;
-let mseedArchive = new seisplotjs_seedlink.MSeedArchive("http://eeyore.seis.sc.edu:6384", "%n/%s/%Y/%j/%n.%s.%l.%c.%Y.%j.%H");
 let hostDiv = d3.select("div.host");
 let seismograph;
+let direct_ringserver = true;
+
+let host = 'eeyore.seis.sc.edu';
+let port = 6383
+let protocol = 'http:';
+if ("https:" == document.location.protocol) {
+  protocol = 'https:'
+}
+if (direct_ringserver) {
+  console.log("assuming pages served directly by ringserver "+document.location.host+" "+document.location.port);
+  host = document.location.hostname;
+  port = document.location.port;
+}
+let portStr = "";
+if (port != 80) {
+  portStr = ":"+port;
+}
+let baseUrl = protocol+"//"+host+portStr+'/mseed';
+let pattern = "%n/%s/%Y/%j/%n.%s.%l.%c.%Y.%j.%H";
+
+console.log("baseUrl: "+baseUrl);
+let mseedArchive = new seisplotjs_seedlink.MSeedArchive(baseUrl, pattern);
+
 hostDiv.append("p").text("Base URL: "+mseedArchive.getRootUrl());
 hostDiv.append("p").text("Pattern: "+mseedArchive.getPattern());
 hostDiv.append("p").text("Check: "+mseedArchive.checkPattern(mseedArchive.getPattern()));
-let start = moment.utc('2018-07-02T02:01:23');
-let end = moment.utc('2018-07-02T02:58:23');
+let start = moment.utc('2018-07-02T02:41:23');
+let end = moment.utc('2018-07-02T03:08:23');
 let net = 'CO';
 let sta = 'TEEBA';
 let loc = '00';
