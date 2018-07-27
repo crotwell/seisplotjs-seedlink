@@ -4,6 +4,8 @@ import * as util from './util';
 import * as miniseed from 'seisplotjs-miniseed';
 import * as RSVP from 'rsvp';
 
+let model = miniseed.model;
+
 export const Allowed_Flags = [ 'n', 's', 'l', 'c', 'Y', 'j', 'H'];
 
 export class MSeedArchive {
@@ -47,7 +49,7 @@ export class MSeedArchive {
     }
     return true;
   }
-  loadDataForChannel(channel: mode.Channel, start: moment, end: moment) {
+  loadDataForChannel(channel: model.Channel, start: moment, end: moment) {
     return this.loadData(channel.station().network().networkCode(),
                     channel.station().stationCode(),
                     channel.locationCode(),
@@ -127,7 +129,7 @@ export class MSeedArchive {
   }
   fillTimePattern(basePattern: string, t: moment): string {
     return basePattern.replace(/%Y/g, t.format('YYYY'))
-      .replace(/%j/g, t.format('DDD'))
+      .replace(/%j/g, t.format('DDDD'))
       .replace(/%H/g, t.format('HH'));
 
   }
